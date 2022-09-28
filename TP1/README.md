@@ -55,7 +55,7 @@ La gateway sert à communiquer avec d'autres réseaux (internet)
 
 🌞 Utilisez l'interface graphique de votre OS pour **changer d'adresse IP** :
 
-![Changement](./pics/modifIP.PNG)
+![Changementip](./pics/modifIP.png)
 
 🌞 **Il est possible que l'on perde l'accès internet.** Si on perd l'accès à internet c'est parce qu'on a la même adresse ip qu'une autre machine du réseau.
 
