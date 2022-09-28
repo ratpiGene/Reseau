@@ -131,6 +131,8 @@ Itinéraire déterminé.
 
 ## 3. Petit chat privé
 
+![helicocat](./pics/JKM.gif)
+
 Sur un Windows, ça donne un truc comme ça :
 
 - 🌞 **sur le PC _client_**
