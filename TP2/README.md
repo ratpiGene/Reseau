@@ -46,17 +46,43 @@ Le lab, il vous faut deux machine :
 
 🌞 **Mettez en place une configuration réseau fonctionnelle entre les deux machines**
 
-- vous renseignerez dans le compte rendu :
-  - les deux IPs choisies, en précisant le masque
-  - l'adresse de réseau
-  - l'adresse de broadcast
-- vous renseignerez aussi les commandes utilisées pour définir les adresses IP *via* la ligne de commande
+>PC 1:
+```
+$ ip a 
+  [...]
+  inet 10.42.0.1/26 brd 10.42.0.63
+  [...]
+```
+>PC 2:
+```
+$ ifconfig
+  [...]
+  inet 10.42.0.2 netmask 0xffffffc0 broadcast 10.42.0.63
+  [...]  
+```
 
-> Rappel : tout doit être fait *via* la ligne de commandes. Faites-vous du bien, et utilisez Powershell plutôt que l'antique cmd sous Windows svp.
+
+```
+$ cat /etc/systemd/network/wlp0s20f3.network
+[Match]
+Name=wlp0s20f3
+
+[Network]
+Address=10.42.0.1/26
+Gateway=10.42.0.1
+DNS=8.8.8.8
+```
 
 🌞 **Prouvez que la connexion est fonctionnelle entre les deux machines**
 
-- un `ping` suffit !
+>PING:
+```
+$ ping 10.42.0.2
+PING 10.42.0.2 (10.42.0.2) 56(84) bytes of data.
+64 bytes from 10.42.0.2: icmp_seq=1 ttl=64 time=0.578 ms
+64 bytes from 10.42.0.2: icmp_seq=2 ttl=64 time=0.749 ms
+```
+
 
 🌞 **Wireshark it**
 
@@ -154,7 +180,6 @@ J'peux vous aider à le mettre en place, mais **vous le faites uniquement dans u
 GLHF.
 
 # III. DHCP you too my brooo
-
 *DHCP* pour *Dynamic Host Configuration Protocol* est notre p'tit pote qui nous file des IP quand on arrive dans un réseau, parce que c'est chiant de le faire à la main :)
 
 Quand on arrive dans un réseau, notre PC contacte un serveur DHCP, et récupère généralement 3 infos :
@@ -198,3 +223,4 @@ TCP et UDP ce sont les deux protocoles qui utilisent des ports. Si on veut accé
 
 🦈 **PCAP qui contient un extrait de l'échange qui vous a permis d'identifier les infos**
 
+![finito](./pics/distordcat.gif)
