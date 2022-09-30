@@ -97,7 +97,7 @@ PING 10.42.0.2 (10.42.0.2) 56(84) bytes of data.
 
 🦈 **PCAP qui contient les paquets ICMP qui vous ont permis d'identifier les types ICMP**
 
->🌞[pcap icmp](./pcap/icmp.pcapng)
+>🦈[pcap icmp](./pcap/icmp.pcapng)🦈
 
 # II. ARP my bro
 
@@ -148,12 +148,25 @@ Address                  HWtype  HWaddress           Flags Mask            Iface
 
 🌞 **Wireshark it**
 
-- vous savez maintenant comment forcer un échange ARP : il sufit de vider la table ARP et tenter de contacter quelqu'un, l'échange ARP se fait automatiquement
-- mettez en évidence les deux trames ARP échangées lorsque vous essayez de contacter quelqu'un pour la "première" fois
-  - déterminez, pour les deux trames, les adresses source et destination
-  - déterminez à quoi correspond chacune de ces adresses
+__Dans le terminal:__
+```
+$ sudo ip n flush all ; ping 10.42.0.2
+```
+
+__-Trame 1:__
+
+    - Adresse source : 08:97:98:d4:fb:50  (PC 1)
+    - Adresse dest   : ff:ff:ff:ff:ff:ff  (BROADCAST)
+
+__-Trame 2:__
+
+    -Adresse source : a0:ce:c8:ee:d4:14  (PC 2)
+    -Adresse dest   : 08:97:98:d4:fb:50  (PC 1)
 
 🦈 **PCAP qui contient les trames ARP**
+
+>🦈[pcap arp](./pcap/arp.pcapng)🦈
+
 
 > L'échange ARP est constitué de deux trames : un ARP broadcast et un ARP reply.
 
@@ -211,11 +224,43 @@ L'échange DHCP consiste en 4 trames : DORA, que je vous laisse google vous-mêm
 
 🌞 **Wireshark it**
 
-- identifiez les 4 trames DHCP lors d'un échange DHCP
-  - mettez en évidence les adresses source et destination de chaque trame
-- identifiez dans ces 4 trames les informations **1**, **2** et **3** dont on a parlé juste au dessus
+__-Trame 1:__
+
+    - Adresse source : 44:af:28:c4:66:70  (ME)
+    - Adresse dest   : ff:ff:ff:ff:ff:ff  (BROADCAST)
+
+__-Trame 2:__
+
+    -Adresse source : 00:c0:e7:e0:04:4e  (DHCP SERVER)
+    -Adresse dest   : 44:af:28:c4:66:70  (ME)
+
+__-Trame 3:__
+
+    -Adresse source : 44:af:28:c4:66:70  (ME)
+    -Adresse dest   : 00:c0:e7:e0:04:4e  (DHCP SERVER)
+
+__-Trame 4:__
+
+    -Adresse source : 00:c0:e7:e0:04:4e  (DHCP SERVER)
+    -Adresse dest   : 44:af:28:c4:66:70  (ME) 
+
+>**1** ip proposée dans les données de la trame 2. 
+
+Wireshark : ``Dynamic Host Configuration Protocol (Offer) > Your (client) IP address = 10.33.18.180``
+
+>**2** ip passerelle dans la trame 2. 
+
+Wireshark : ``Dynamic Host Configuration Protocol (Offer) > Option : (3) Router > Router = 10.33.19.254``
+
+>**3** L'ip d'un serveur DNS dans la trame 2.
+
+Wireshark : ``Dynamic Host Configuration Protocol (Offer) > Option : (6) Domain Name Server > Domaine Name Server = 8.8.8.8``
+
+
 
 🦈 **PCAP qui contient l'échange DORA**
+
+>🦈[pcap dhcp](./pcap/dhcp.pcapng)🦈
 
 > **Soucis** : l'échange DHCP ne se produit qu'à la première connexion. **Pour forcer un échange DHCP**, ça dépend de votre OS. Sur **GNU/Linux**, avec `dhclient` ça se fait bien. Sur **Windows**, le plus simple reste de définir une IP statique pourrie sur la carte réseau, se déconnecter du réseau, remettre en DHCP, se reconnecter au réseau. Sur **MacOS**, je connais peu mais Internet dit qu'c'est po si compliqué, appelez moi si besoin.
 
