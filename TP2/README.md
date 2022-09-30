@@ -97,6 +97,8 @@ PING 10.42.0.2 (10.42.0.2) 56(84) bytes of data.
 
 🦈 **PCAP qui contient les paquets ICMP qui vous ont permis d'identifier les types ICMP**
 
+>🌞[pcap icmp](./pcap/icmp.pcapng)
+
 # II. ARP my bro
 
 ARP permet, pour rappel, de résoudre la situation suivante :
@@ -111,21 +113,38 @@ ARP permet, pour rappel, de résoudre la situation suivante :
 
 🌞 **Check the ARP table**
 
-- utilisez une commande pour afficher votre table ARP
-- déterminez la MAC de votre binome depuis votre table ARP
-- déterminez la MAC de la *gateway* de votre réseau 
-  - celle de votre réseau physique, WiFi, genre YNOV, car il n'y en a pas dans votre ptit LAN
-  - c'est juste pour vous faire manipuler un peu encore :)
+```
+$ arp -n
+Address                  HWtype  HWaddress           Flags Mask            Iface
+10.42.0.2                ether   a0:ce:c8:ee:d4:14   C                     enp8s0
+10.33.19.254             ether   00:c0:e7:e0:04:4e   C                     wlp0s20f3
+```
+__MAC 1: ``a0:ce:c8:ee:d4:14``__
 
-> Il peut être utile de ré-effectuer des `ping` avant d'afficher la table ARP. En effet : les infos stockées dans la table ARP ne sont stockées que temporairement. Ce laps de temps est de l'ordre de ~60 secondes sur la plupart de nos machines.
+__MAC gateway : ``00:c0:e7:e0:04:4e``__
 
 🌞 **Manipuler la table ARP**
 
-- utilisez une commande pour vider votre table ARP
-- prouvez que ça fonctionne en l'affichant et en constatant les changements
-- ré-effectuez des pings, et constatez la ré-apparition des données dans la table ARP
+```
+$ sudo ip n flush all
+$ arp -n
+$ 
+$
+```
+```
+$ sudo ip n flush all ; ping 10.42.0.2 -c 1 ; arp -n
+PING 10.42.0.2 (10.42.0.2) 56(84) bytes of data.
+64 bytes from 10.42.0.2: icmp_seq=1 ttl=64 time=0.860 ms
+
+--- 10.42.0.2 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.860/0.860/0.860/0.000 ms
+Address                  HWtype  HWaddress           Flags Mask            Iface
+10.42.0.2                ether   a0:ce:c8:ee:d4:14   C                     enp8s0
+```
 
 > Les échanges ARP sont effectuées automatiquement par votre machine lorsqu'elle essaie de joindre une machine sur le même LAN qu'elle. Si la MAC du destinataire n'est pas déjà dans la table ARP, alors un échange ARP sera déclenché.
+
 
 🌞 **Wireshark it**
 
