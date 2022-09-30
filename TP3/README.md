@@ -4,23 +4,6 @@ Au menu de ce TP, on va revoir un peu ARP et IP histoire de **se mettre en jambe
 
 Puis on mettra en place **un routage simple, pour permettre à deux LANs de communiquer**.
 
-
-## Sommaire
-
-- [TP3 : On va router des trucs](#tp3--on-va-router-des-trucs)
-  - [Sommaire](#sommaire)
-  - [0. Prérequis](#0-prérequis)
-  - [I. ARP](#i-arp)
-    - [1. Echange ARP](#1-echange-arp)
-    - [2. Analyse de trames](#2-analyse-de-trames)
-  - [II. Routage](#ii-routage)
-    - [1. Mise en place du routage](#1-mise-en-place-du-routage)
-    - [2. Analyse de trames](#2-analyse-de-trames-1)
-    - [3. Accès internet](#3-accès-internet)
-  - [III. DHCP](#iii-dhcp)
-    - [1. Mise en place du serveur DHCP](#1-mise-en-place-du-serveur-dhcp)
-    - [2. Analyse de trames](#2-analyse-de-trames-2)
-
 ## 0. Prérequis
 
 ➜ Pour ce TP, on va se servir de VMs Rocky Linux. 1Go RAM c'est large large. Vous pouvez redescendre la mémoire vidéo aussi.  
