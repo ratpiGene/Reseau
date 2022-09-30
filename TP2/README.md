@@ -172,44 +172,7 @@ __-Trame 2:__
 
 # II.5 Interlude hackerzz
 
-**Chose promise chose due, on va voir les bases de l'usurpation d'identité en réseau : on va parler d'*ARP poisoning*.**
-
-> On peut aussi trouver *ARP cache poisoning* ou encore *ARP spoofing*, ça désigne la même chose.
-
-Le principe est simple : on va "empoisonner" la table ARP de quelqu'un d'autre.  
-Plus concrètement, on va essayer d'introduire des fausses informations dans la table ARP de quelqu'un d'autre.
-
-Entre introduire des fausses infos et usurper l'identité de quelqu'un il n'y a qu'un pas hihi.
-
----
-
-Le principe de l'attaque :
-
-- on admet Alice, Bob et Eve, tous dans un LAN, chacun leur PC
-- leur configuration IP est ok, tout va bien dans le meilleur des mondes
-- **Eve 'lé pa jonti** *(ou juste un agent de la CIA)* : elle aimerait s'immiscer dans les conversations de Alice et Bob
-  - pour ce faire, Eve va empoisonner la table ARP de Bob, pour se faire passer pour Alice
-  - elle va aussi empoisonner la table ARP d'Alice, pour se faire passer pour Bob
-  - ainsi, tous les messages que s'envoient Alice et Bob seront en réalité envoyés à Eve
-
-La place de ARP dans tout ça :
-
-- ARP est un principe de question -> réponse (broadcast -> *reply*)
-- IL SE TROUVE qu'on peut envoyer des *reply* à quelqu'un qui n'a rien demandé :)
-- il faut donc simplement envoyer :
-  - une trame ARP reply à Alice qui dit "l'IP de Bob se trouve à la MAC de Eve" (IP B -> MAC E)
-  - une trame ARP reply à Bob qui dit "l'IP de Alice se trouve à la MAC de Eve" (IP A -> MAC E)
-- ha ouais, et pour être sûr que ça reste en place, il faut SPAM sa mum, genre 1 reply chacun toutes les secondes ou truc du genre
-  - bah ui ! Sinon on risque que la table ARP d'Alice ou Bob se vide naturellement, et que l'échange ARP normal survienne
-  - aussi, c'est un truc possible, mais pas normal dans cette utilisation là, donc des fois bon, ça chie, DONC ON SPAM
-
----
-
-J'peux vous aider à le mettre en place, mais **vous le faites uniquement dans un cadre privé, chez vous, ou avec des VMs**
-
-**Je vous conseille 3 machines Linux**, Alice Bob et Eve. La commande `[arping](https://sandilands.info/sgordon/arp-spoofing-on-wired-lan)` pourra vous carry : elle permet d'envoyer manuellement des trames ARP avec le contenu de votre choix.
-
-GLHF.
+![finito](./pics/distordcat.gif)
 
 # III. DHCP you too my brooo
 *DHCP* pour *Dynamic Host Configuration Protocol* est notre p'tit pote qui nous file des IP quand on arrive dans un réseau, parce que c'est chiant de le faire à la main :)
@@ -282,9 +245,9 @@ TCP et UDP ce sont les deux protocoles qui utilisent des ports. Si on veut accé
 
 🌞 **Wireshark it**
 
-- déterminez à quelle IP et quel port votre PC se connecte quand vous regardez une vidéo Youtube
-  - il sera sûrement plus simple de repérer le trafic Youtube en fermant tous les autres onglets et toutes les autres applications utilisant du réseau
+En regardant la vidéo : ``catJAM DANCING FOR 10 HOURS``, avec Wireshark on voit des paquets en provenance de mon ip vers l'ip ``77.136.192.86`` et vers le port ``443``
 
 🦈 **PCAP qui contient un extrait de l'échange qui vous a permis d'identifier les infos**
 
-![finito](./pics/distordcat.gif)
+>🦈[pcap catjam](./pcap/catjam.pcapng)🦈
+
