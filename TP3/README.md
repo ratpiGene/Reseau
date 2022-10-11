@@ -99,7 +99,7 @@ Mac Marcel: `08:00:27:24:c8:63`
   rtt min/avg/max/mdev = 0.538/0.538/0.538/0.000 ms
   ```
 
-  🦈 **[Capture réseau `tp2_arp.pcapng` qui contient un ARP request et un ARP reply](./pcap/tp2_arp.pcapng)**
+> 🦈 **[Capture réseau `tp2_arp.pcapng` qui contient un ARP request et un ARP reply](./pcap/tp2_arp.pcapng)**
 
 ## II. Routage
 
@@ -125,12 +125,35 @@ Vous aurez besoin de 3 VMs pour cette partie. **Réutilisez les deux VMs précé
 
 🌞**Activer le routage sur le noeud `router`**
 
-> Cette étape est nécessaire car Rocky Linux c'est pas un OS dédié au routage par défaut. Ce n'est bien évidemment une opération qui n'est pas nécessaire sur un équipement routeur dédié comme du matériel Cisco.
+```
+[gene@router ~]$ sudo firewall-cmd --get-active-zone
+public
+  interfaces: enp0s3 enp0s8 enp0s9
+[gene@router ~]$ sudo firewall-cmd --add-masquerade --zone=public --permanent
+success
+```
 
 🌞**Ajouter les routes statiques nécessaires pour que `john` et `marcel` puissent se `ping`**
 
-- il faut ajouter une seule route des deux côtés
+```
+[gene@john ~]$ sudo ip route add 10.3.2.0/24 via 10.3.1.254 dev enp0s8
+```
+
+```
+[gene@marcel ~]$ sudo ip route add 10.3.1.0/24 via 10.3.2.254 dev enp0s8
+```
+
 - une fois les routes en place, vérifiez avec un `ping` que les deux machines peuvent se joindre
+
+  ```
+  [gene@john ~]$ ping -c 1 10.3.2.12
+  PING 10.3.2.12 (10.3.2.12) 56(84) bytes of data.
+  64 bytes from 10.3.2.12: icmp_seq=1 ttl=63 time=0.699 ms
+
+  --- 10.3.2.12 ping statistics ---
+  1 packets transmitted, 1 received, 0% packet loss, time 0ms
+  rtt min/avg/max/mdev = 0.699/0.699/0.699/0.000 ms
+  ```
 
 ### 2. Analyse de trames
 
@@ -139,23 +162,44 @@ Vous aurez besoin de 3 VMs pour cette partie. **Réutilisez les deux VMs précé
 - videz les tables ARP des trois noeuds
 - effectuez un `ping` de `john` vers `marcel`
 - regardez les tables ARP des trois noeuds
+  ```
+  [gene@john ~]$ sudo ip neigh flush all
+  [gene@john ~]$ ping -c 1 10.3.2.12
+  PING 10.3.2.12 (10.3.2.12) 56(84) bytes of data.
+  64 bytes from 10.3.2.12: icmp_seq=1 ttl=63 time=1.23 ms
+  [...]
+  [gene@john ~]$ ip neigh show
+  10.3.1.254 dev enp0s8 lladdr 08:00:27:7c:49:7c REACHABLE
+  10.3.1.1 dev enp0s8 lladdr 0a:00:27:00:00:0b REACHABLE
+  ```
+  ```
+  [gene@router ~]$ sudo ip neigh flush all
+  [gene@router ~]$ ip neigh show
+  10.3.2.12 dev enp0s9 lladdr 08:00:27:24:c8:63 REACHABLE
+  10.3.1.11 dev enp0s8 lladdr 08:00:27:43:e4:69 REACHABLE
+  10.3.1.1 dev enp0s8 lladdr 0a:00:27:00:00:0b REACHABLE
+  ```
+  ```
+  [gene@marcel ~]$ sudo ip neigh flush all
+  [gene@marcel ~]$ ip neigh show
+  10.3.2.254 dev enp0s8 lladdr 08:00:27:2c:d8:5b REACHABLE
+  10.3.2.1 dev enp0s8 lladdr 0a:00:27:00:00:3b REACHABLE
+  ```
 - essayez de déduire un peu les échanges ARP qui ont eu lieu
+  - Tout d'abord, un échange ARP entre `John` et `Router` puis un échange ARP entre `Router` et `Marcel`.
 - répétez l'opération précédente (vider les tables, puis `ping`), en lançant `tcpdump` sur `marcel`
 - **écrivez, dans l'ordre, les échanges ARP qui ont eu lieu, puis le ping et le pong, je veux TOUTES les trames** utiles pour l'échange
 
-Par exemple (copiez-collez ce tableau ce sera le plus simple) :
+  | ordre | type trame  | IP source  | MAC source                   | IP destination | MAC destination              |
+  | ----- | ----------- | ---------- | ---------------------------- | -------------- | ---------------------------- |
+  | 1     | Requête ARP | x          | `router` `08:00:27:2c:d8:5b` | x              | Broadcast `FF:FF:FF:FF:FF`   |
+  | 2     | Réponse ARP | x          | `marcel` `08:00:27:24:c8:63` | x              | `router` `08:00:27:2c:d8:5b` |
+  | 3     | Ping        | 10.3.2.254 | `router` `08:00:27:2c:d8:5b` | 10.3.2.12      | `marcel` `08:00:27:24:c8:63` |
+  | 4     | Pong        | 10.3.2.12  | `marcel` `08:00:27:24:c8:63` | 10.3.2.254     | `router` `08:00:27:2c:d8:5b` |
+  | 5     | Requête ARP | x          | `marcel` `08:00:27:24:c8:63` | x              | Broadcast `FF:FF:FF:FF:FF`   |
+  | 6     | Réponse ARP | x          | `router` `08:00:27:2c:d8:5b` | x              | `router` `08:00:27:24:c8:63` |
 
-| ordre | type trame  | IP source | MAC source              | IP destination | MAC destination            |
-| ----- | ----------- | --------- | ----------------------- | -------------- | -------------------------- |
-| 1     | Requête ARP | x         | `john` `AA:BB:CC:DD:EE` | x              | Broadcast `FF:FF:FF:FF:FF` |
-| 2     | Réponse ARP | x         | ?                       | x              | `john` `AA:BB:CC:DD:EE`    |
-| ...   | ...         | ...       | ...                     |                |                            |
-| ?     | Ping        | ?         | ?                       | ?              | ?                          |
-| ?     | Pong        | ?         | ?                       | ?              | ?                          |
-
-> Vous pourriez, par curiosité, lancer la capture sur `john` aussi, pour voir l'échange qu'il a effectué de son côté.
-
-🦈 **Capture réseau `tp2_routage_marcel.pcapng`**
+> 🦈 **[Capture réseau `tp2_routage_marcel.pcapng`](./pcap/tp2_arp.pcapng)**
 
 ### 3. Accès internet
 
