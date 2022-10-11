@@ -369,18 +369,90 @@ success
 🌞**Améliorer la configuration du DHCP**
 
 - ajoutez de la configuration à votre DHCP pour qu'il donne aux clients, en plus de leur IP :
+
   - une route par défaut
   - un serveur DNS à utiliser
+
+    ```
+    [gene@john ~]$ sudo cat /etc/dhcp/dhcpd.conf
+        #
+        # DHCP Server Configuration file.
+        #   see /usr/share/doc/dhcp-server/dhcpd.conf.example
+        #   see dhcpd.conf(5) man page
+        #
+
+        default-lease-time 900;
+        max-lease-time 10800;
+        ddns-update-style none;
+        authoritative;
+        subnet 10.3.1.0 netmask 255.255.255.0 {
+        range 10.3.1.1 10.3.1.253;
+        option routers 10.3.1.254;
+        option subnet-mask 255.255.255.0;
+        option domain-name-servers 8.8.8.8;
+
+        }
+    ```
+
 - récupérez de nouveau une IP en DHCP sur `marcel` pour tester :
+
   - `marcel` doit avoir une IP
     - vérifier avec une commande qu'il a récupéré son IP
     - vérifier qu'il peut `ping` sa passerelle
   - il doit avoir une route par défaut
+
     - vérifier la présence de la route avec une commande
     - vérifier que la route fonctionne avec un `ping` vers une IP
-  - il doit connaître l'adresse d'un serveur DNS pour avoir de la résolution de noms
-    - vérifier avec la commande `dig` que ça fonctionne
-    - vérifier un `ping` vers un nom de domaine
+
+      ```
+      [gene@bob ~]$ ip route
+      default via 10.3.1.254 dev enp0s8
+      default via 10.3.1.254 dev enp0s8 proto dhcp src 10.3.1.2 metric 100
+      10.3.1.0/24 dev enp0s8 proto kernel scope link src 10.3.1.2 metric 100
+      [leo@bob ~]$ ping -c 1 1.1.1.1
+      PING 1.1.1.1 (1.1.1.1) 56(84) bytes of data.
+      64 bytes from 1.1.1.1: icmp_seq=1 ttl=54 time=17.1 ms
+
+      --- 1.1.1.1 ping statistics ---
+      1 packets transmitted, 1 received, 0% packet loss, time 0ms
+      rtt min/avg/max/mdev = 17.144/17.144/17.144/0.000 ms
+      ```
+
+- il doit connaître l'adresse d'un serveur DNS pour avoir de la résolution de noms
+- vérifier avec la commande `dig` que ça fonctionne
+- vérifier un `ping` vers un nom de domaine
+
+  ````
+  [gene@bob ~]$ dig google.com
+
+            ; <<>> DiG 9.16.23-RH <<>> google.com
+            ;; global options: +cmd
+            ;; Got answer:
+            ;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 47033
+            ;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1
+
+            ;; OPT PSEUDOSECTION:
+            ; EDNS: version: 0, flags:; udp: 512
+            ;; QUESTION SECTION:
+            ;google.com.                    IN      A
+
+            ;; ANSWER SECTION:
+            google.com.             300     IN      A       216.58.214.78
+
+            ;; Query time: 22 msec
+            ;; SERVER: 8.8.8.8#53(8.8.8.8)
+            ;; WHEN: Mon Oct 03 17:28:05 CEST 2022
+            ;; MSG SIZE  rcvd: 55
+
+            [leo@bob ~]$ ping -c 1 ynov.com
+            PING ynov.com (104.26.11.233) 56(84) bytes of data.
+            64 bytes from 104.26.11.233 (104.26.11.233): icmp_seq=1 ttl=54 time=16.8 ms
+
+            --- ynov.com ping statistics ---
+            1 packets transmitted, 1 received, 0% packet loss, time 0ms
+            rtt min/avg/max/mdev = 16.752/16.752/16.752/0.000 ms
+            ```
+  ````
 
 ### 2. Analyse de trames
 
@@ -388,8 +460,22 @@ success
 
 - lancer une capture à l'aide de `tcpdump` afin de capturer un échange DHCP
 - demander une nouvelle IP afin de générer un échange DHCP
-- exportez le fichier `.pcapng`
 
-🦈 **Capture réseau `tp2_dhcp.pcapng`**
+  ```
+    [gene@bob ~]$ sudo dhclient -r
+    Killed old client process
+    [gene@bob ~]$ sudo tcpdump -i enp0s8 -c 6 -w tp2_dhcp.pcapng not port 22 &
+    [1] 1794
+    [gene@bob ~]$ dropped privs to tcpdump
+    tcpdump: listening on enp0s8, link-type EN10MB (Ethernet), snapshot length 262144 bytes
+
+    [gene@bob ~]$ sudo dhclient
+    6 packets captured
+    6 packets received by filter
+    0 packets dropped by kernel
+    [1]+  Done                    sudo tcpdump -i enp0s8 -c 6 -w tp2_dhcp.pcapng not port 22
+  ```
+
+🦈 **[Capture réseau `tp2_dhcp.pcapng`](./pcap/tp2_dhcp.pcapng)**
 
 ![wewechatquidance](./pics/meow.gif)
