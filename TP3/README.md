@@ -37,7 +37,7 @@ PING 10.3.1.12 (10.3.1.12) 56(84) bytes of data.
 --- 10.3.1.12 ping statistics ---
 1 packets transmitted, 1 received, 0% packet loss, time 0ms
 rtt min/avg/max/mdev = 0.623/0.623/0.623/0.000 ms
-[leo@john ~]$ ip neigh
+[gene@john ~]$ ip neigh
 10.0.2.2 dev enp0s3 lladdr 52:54:00:12:35:02 STALE
 10.3.1.1 dev enp0s8 lladdr 0a:00:27:00:00:0b REACHABLE
 10.3.1.12 dev enp0s8 lladdr 08:00:27:24:c8:63 DELAY
@@ -273,7 +273,7 @@ success
         ;; SERVER: 8.8.8.8#53(8.8.8.8)
         ;; WHEN: Mon Oct 03 16:08:44 CEST 2022
         ;; MSG SIZE  rcvd: 55
-        [leo@john ~]$ ping -c 1 github.com
+        [gene@john ~]$ ping -c 1 github.com
         PING github.com (140.82.121.3) 56(84) bytes of data.
         64 bytes from lb-140-82-121-3-fra.github.com (140.82.121.3): icmp_seq=1 ttl=52 time=26.4 ms
 
@@ -299,7 +299,7 @@ success
   --- 8.8.8.8 ping statistics ---
   1 packets transmitted, 1 received, 0% packet loss, time 0ms
   rtt min/avg/max/mdev = 16.215/16.215/16.215/0.000 ms
-  [leo@john ~]$ 2 packets captured
+  [gene@john ~]$ 2 packets captured
   2 packets received by filter
   0 packets dropped by kerne
   ```
@@ -409,7 +409,7 @@ success
       default via 10.3.1.254 dev enp0s8
       default via 10.3.1.254 dev enp0s8 proto dhcp src 10.3.1.2 metric 100
       10.3.1.0/24 dev enp0s8 proto kernel scope link src 10.3.1.2 metric 100
-      [leo@bob ~]$ ping -c 1 1.1.1.1
+      [gene@bob ~]$ ping -c 1 1.1.1.1
       PING 1.1.1.1 (1.1.1.1) 56(84) bytes of data.
       64 bytes from 1.1.1.1: icmp_seq=1 ttl=54 time=17.1 ms
 
@@ -444,7 +444,7 @@ success
             ;; WHEN: Mon Oct 03 17:28:05 CEST 2022
             ;; MSG SIZE  rcvd: 55
 
-            [leo@bob ~]$ ping -c 1 ynov.com
+            [gene@bob ~]$ ping -c 1 ynov.com
             PING ynov.com (104.26.11.233) 56(84) bytes of data.
             64 bytes from 104.26.11.233 (104.26.11.233): icmp_seq=1 ttl=54 time=16.8 ms
 
