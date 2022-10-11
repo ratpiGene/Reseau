@@ -78,9 +78,28 @@ Mac Marcel: `08:00:27:24:c8:63`
 - utilisez la commande `tcpdump` pour réaliser une capture de trame
 - videz vos tables ARP, sur les deux machines, puis effectuez un `ping`
 
-🦈 **Capture réseau `tp2_arp.pcapng`** qui contient un ARP request et un ARP reply
+  ```
+  [gene@john ~]$ sudo ip neigh flush all
+  [gene@john ~]$ sudo tcpdump -c 4 -i enp0s8 -w tp2_arp.pcapng arp
+  dropped privs to tcpdump
+  tcpdump: listening on enp0s8, link-type EN10MB (Ethernet), snapshot length 262144 bytes
+  4 packets captured
+  5 packets received by filter
+  0 packets dropped by kernel
+  ```
 
-> **Si vous ne savez pas comment récupérer votre fichier `.pcapng`** sur votre hôte afin de l'ouvrir dans Wireshark, et me le livrer en rendu, demandez-moi.
+  ```
+  [gene@marcel ~]$ sudo ip neigh flush all
+  [gene@marcel ~]$ ping -c 1 10.3.1.11
+  PING 10.3.1.11 (10.3.1.11) 56(84) bytes of data.
+  64 bytes from 10.3.1.11: icmp_seq=1 ttl=64 time=0.538 ms
+
+  --- 10.3.1.11 ping statistics ---
+  1 packets transmitted, 1 received, 0% packet loss, time 0ms
+  rtt min/avg/max/mdev = 0.538/0.538/0.538/0.000 ms
+  ```
+
+  🦈 **[Capture réseau `tp2_arp.pcapng` qui contient un ARP request et un ARP reply](./pcap/tp2_arp.pcapng)**
 
 ## II. Routage
 
