@@ -6,34 +6,12 @@ Puis on mettra en place **un routage simple, pour permettre à deux LANs de comm
 
 ## 0. Prérequis
 
-➜ Pour ce TP, on va se servir de VMs Rocky Linux. 1Go RAM c'est large large. Vous pouvez redescendre la mémoire vidéo aussi.  
-
-➜ Vous aurez besoin de deux réseaux host-only dans VirtualBox :
-
-- un premier réseau `10.3.1.0/24`
-- le second `10.3.2.0/24`
-- **vous devrez désactiver le DHCP de votre hyperviseur (VirtualBox) et définir les IPs de vos VMs de façon statique**
-
-➜ Quelques paquets seront souvent nécessaires dans les TPs, il peut être bon de les installer dans la VM que vous clonez :
-
-- de quoi avoir les commandes :
-  - `dig`
-  - `tcpdump`
-  - `nmap`
-  - `nc`
-  - `python3`
-  - `vim` peut être une bonne idée
-
-➜ Les firewalls de vos VMs doivent **toujours** être actifs (et donc correctement configurés).
-
-➜ **Si vous voyez le p'tit pote 🦈 c'est qu'il y a un PCAP à produire et à mettre dans votre dépôt git de rendu.**
-
 ## I. ARP
 
 Première partie simple, on va avoir besoin de 2 VMs.
 
 | Machine  | `10.3.1.0/24` |
-|----------|---------------|
+| -------- | ------------- |
 | `john`   | `10.3.1.11`   |
 | `marcel` | `10.3.1.12`   |
 
@@ -51,12 +29,47 @@ Première partie simple, on va avoir besoin de 2 VMs.
 
 🌞**Générer des requêtes ARP**
 
-- effectuer un `ping` d'une machine à l'autre
-- observer les tables ARP des deux machines
-- repérer l'adresse MAC de `john` dans la table ARP de `marcel` et vice-versa
+```
+[gene@john ~]$ ping -c 1 10.3.1.12
+PING 10.3.1.12 (10.3.1.12) 56(84) bytes of data.
+64 bytes from 10.3.1.12: icmp_seq=1 ttl=64 time=0.623 ms
+
+--- 10.3.1.12 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.623/0.623/0.623/0.000 ms
+[leo@john ~]$ ip neigh
+10.0.2.2 dev enp0s3 lladdr 52:54:00:12:35:02 STALE
+10.3.1.1 dev enp0s8 lladdr 0a:00:27:00:00:0b REACHABLE
+10.3.1.12 dev enp0s8 lladdr 08:00:27:24:c8:63 DELAY
+```
+
+```
+[gene@marcel ~]$ ip neigh
+10.3.1.11 dev enp0s8 lladdr 08:00:27:43:e4:69 STALE
+10.3.1.1 dev enp0s8 lladdr 0a:00:27:00:00:0b REACHABLE
+10.0.2.2 dev enp0s3 lladdr 52:54:00:12:35:02 STALE
+```
+
+MAC John: `08:00:27:43:e4:69`
+
+Mac Marcel: `08:00:27:24:c8:63`
+
 - prouvez que l'info est correcte (que l'adresse MAC que vous voyez dans la table est bien celle de la machine correspondante)
   - une commande pour voir la MAC de `marcel` dans la table ARP de `john`
+    ```
+    [gene@john ~]$ ip neigh | grep 10.3.1.12
+    10.3.1.12 dev enp0s8 lladdr 08:00:27:24:c8:63 STALE
+    ```
   - et une commande pour afficher la MAC de `marcel`, depuis `marcel`
+    ```
+    [gene@marcel ~]$ ip add show enp0s8
+    3: enp0s8: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
+        link/ether 08:00:27:24:c8:63 brd ff:ff:ff:ff:ff:ff
+        inet 10.3.1.12/24 brd 10.3.1.255 scope global noprefixroute enp0s8
+        valid_lft forever preferred_lft forever
+        inet6 fe80::a00:27ff:fe24:c863/64 scope link
+        valid_lft forever preferred_lft forever
+    ```
 
 ### 2. Analyse de trames
 
@@ -74,7 +87,7 @@ Première partie simple, on va avoir besoin de 2 VMs.
 Vous aurez besoin de 3 VMs pour cette partie. **Réutilisez les deux VMs précédentes.**
 
 | Machine  | `10.3.1.0/24` | `10.3.2.0/24` |
-|----------|---------------|---------------|
+| -------- | ------------- | ------------- |
 | `router` | `10.3.1.254`  | `10.3.2.254`  |
 | `john`   | `10.3.1.11`   | no            |
 | `marcel` | no            | `10.3.2.12`   |
@@ -114,7 +127,7 @@ Vous aurez besoin de 3 VMs pour cette partie. **Réutilisez les deux VMs précé
 Par exemple (copiez-collez ce tableau ce sera le plus simple) :
 
 | ordre | type trame  | IP source | MAC source              | IP destination | MAC destination            |
-|-------|-------------|-----------|-------------------------|----------------|----------------------------|
+| ----- | ----------- | --------- | ----------------------- | -------------- | -------------------------- |
 | 1     | Requête ARP | x         | `john` `AA:BB:CC:DD:EE` | x              | Broadcast `FF:FF:FF:FF:FF` |
 | 2     | Réponse ARP | x         | ?                       | x              | `john` `AA:BB:CC:DD:EE`    |
 | ...   | ...         | ...       | ...                     |                |                            |
@@ -144,7 +157,7 @@ Par exemple (copiez-collez ce tableau ce sera le plus simple) :
 - analysez un ping aller et le retour qui correspond et mettez dans un tableau :
 
 | ordre | type trame | IP source          | MAC source              | IP destination | MAC destination |     |
-|-------|------------|--------------------|-------------------------|----------------|-----------------|-----|
+| ----- | ---------- | ------------------ | ----------------------- | -------------- | --------------- | --- |
 | 1     | ping       | `john` `10.3.1.12` | `john` `AA:BB:CC:DD:EE` | `8.8.8.8`      | ?               |     |
 | 2     | pong       | ...                | ...                     | ...            | ...             | ... |
 
@@ -155,7 +168,7 @@ Par exemple (copiez-collez ce tableau ce sera le plus simple) :
 On reprend la config précédente, et on ajoutera à la fin de cette partie une 4ème machine pour effectuer des tests.
 
 | Machine  | `10.3.1.0/24`              | `10.3.2.0/24` |
-|----------|----------------------------|---------------|
+| -------- | -------------------------- | ------------- |
 | `router` | `10.3.1.254`               | `10.3.2.254`  |
 | `john`   | `10.3.1.11`                | no            |
 | `bob`    | oui mais pas d'IP statique | no            |
