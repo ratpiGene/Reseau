@@ -2,118 +2,129 @@
 
 Dans ce TP on va explorer un peu les protocoles TCP et UDP. On va aussi mettre en place des services qui font appel à ces protocoles.
 
-# 0. Prérequis
-
-➜ Pour ce TP, on va se servir de VMs Rocky Linux. 1Go RAM c'est large large. Vous pouvez redescendre la mémoire vidéo aussi.
-
-➜ Les firewalls de vos VMs doivent **toujours** être actifs (et donc correctement configurés).
-
-➜ **Si vous voyez le p'tit pote 🦈 c'est qu'il y a un PCAP à produire et à mettre dans votre dépôt git de rendu.**
-
 # I. First steps
 
 Faites-vous un petit top 5 des applications que vous utilisez sur votre PC souvent, des applications qui utilisent le réseau : un site que vous visitez souvent, un jeu en ligne, Spotify, j'sais po moi, n'importe.
 
 🌞 **Déterminez, pour ces 5 applications, si c'est du TCP ou de l'UDP**
 
-- avec Wireshark, on va faire les chirurgiens réseau
-- déterminez, pour chaque application :
-  - IP et port du serveur auquel vous vous connectez
-  - le port local que vous ouvrez pour vous connecter
+**-Discord :**
+`TCP 20.90.152.133:443 port local 59940`
 
-> Dès qu'on se connecte à un serveur, notre PC ouvre un port random. Une fois la connexion TCP ou UDP établie, entre le port de notre PC et le port du serveur qui est en écoute, on parle de tunnel TCP ou de tunnel UDP.
+**-Chrome :**
+`TCP 52.54.178.155:443 port local 60176`
 
-> Aussi, TCP ou UDP ? Comment le client sait ? Il sait parce que le serveur a décidé ce qui était le mieux pour tel ou tel type de trafic (un jeu, une page web, etc.) et que le logiciel client est codé pour utiliser TCP ou UDP en conséquence.
+**-Riot Client :**
+`TCP 92.122.218.144:443 port local 60285`
+
+**-Minecraft Launcher :**
+`TCP 13.107.246.43:443 port 60376`
+
+**-Launcher Origin :**
+`TCP 23.57.5.5:443 port local 60464`
 
 🌞 **Demandez l'avis à votre OS**
 
-- votre OS est responsable de l'ouverture des ports, et de placer un programme en "écoute" sur un port
-- il est aussi responsable de l'ouverture d'un port quand une application demande à se connecter à distance vers un serveur
-- bref il voit tout quoi
-- utilisez la commande adaptée à votre OS pour repérer, dans la liste de toutes les connexions réseau établies, la connexion que vous voyez dans Wireshark, pour chacune des 5 applications
-
-**Il faudra ajouter des options adaptées aux commandes pour y voir clair. Pour rappel, vous cherchez des connexions TCP ou UDP.**
-
 ```
-# MacOS
-$ netstat
-
-# GNU/Linux
-$ ss
-
-# Windows
-$ netstat
+netstat -abfnt
 ```
 
-🦈🦈🦈🦈🦈 **Bah ouais, captures Wireshark à l'appui évidemment.** Une capture pour chaque application, qui met bien en évidence le trafic en question.
+> 🦈![discord](./pcap/TCP_Discord.pcapng)
+
+> 🦈![chrome](./pcap/TCP_chrome.pcapng)
+
+> 🦈![riot](./pcap/TCP_Riot.pcapng)
+
+> 🦈![minecraft](./pcap/TCP_Minecraft.pcapng)
+
+> 🦈![origin](./pcap/TCP_Origin.pcapng)
 
 # II. Mise en place
 
-Allumez une VM Linux pour la suite.
-
 ## 1. SSH
-
-Connectez-vous en SSH à votre VM.
 
 🌞 **Examinez le trafic dans Wireshark**
 
-- donnez un sens aux infos devant vos yeux, capturez un peu de trafic, et coupez la capture, sélectionnez une trame random et regardez dedans, vous laissez pas brainfuck par Wireshark n_n
-- **déterminez si SSH utilise TCP ou UDP**
-  - pareil réfléchissez-y deux minutes, logique qu'on utilise pas UDP non ?
-- **repérez le _3-Way Handshake_ à l'établissement de la connexion**
-  - c'est le `SYN` `SYNACK` `ACK`
-- **repérez le FIN FINACK à la fin d'une connexion**
-- entre le _3-way handshake_ et l'échange `FIN`, c'est juste une bouillie de caca chiffré, dans un tunnel TCP
+SSH utilise du TCP, on peut voir que le port local est 22 et le port distant est 50138.
 
 🌞 **Demandez aux OS**
 
 - repérez, avec un commande adaptée, la connexion SSH depuis votre machine
 - ET repérez la connexion SSH depuis votre VM
 
+Windows
+
 ```
-# MacOS
-$ netstat
-
-# GNU/Linux
-$ ss
-
-# Windows
-$ netstat
+netstat -abfnt
+ Impossible d’obtenir les informations de propriétaire
+    TCP    10.3.1.1:50138         10.3.1.11:22           ESTABLISHED
 ```
 
-🦈 **Je veux une capture clean avec le 3-way handshake, un peu de trafic au milieu et une fin de connexion**
+```
+ss -ti
+State         Recv-Q         Send-Q                  Local Address:Port                   Peer Address:Port          Process
+ESTAB         0              0                           10.3.1.11:ssh                        10.3.1.1:50192
+         cubic wscale:8,7 rto:230 rtt:29.868/16.836 ato:40 mss:1364 pmtu:1500 rcvmss:1364 advmss:1460 cwnd:10 bytes_sent:8105 bytes_acked:8105 bytes_received:3049 segs_out:75 segs_in:69 data_segs_out:64 data_segs_in:29 send 3.65Mbps lastsnd:293 lastrcv:2 lastack:2 pacing_rate 7.31Mbps delivery_rate 42.8Mbps delivered:65 busy:859ms rcv_space:14600 rcv_ssthresh:64076 minrtt:0.283
+```
+
+> 🦈 ![Capture SSH](./pcap/TCP_ssh.pcapng)
 
 ## 2. NFS
 
-Allumez une deuxième VM Linux pour cette partie.
-
-Vous allez installer un serveur NFS. Un serveur NFS c'est juste un programme qui écoute sur un port (comme toujours en fait, oèoèoè) et qui propose aux clients d'accéder à des dossiers à travers le réseau.
-
-Une de vos VMs portera donc le serveur NFS, et l'autre utilisera un dossier à travers le réseau.
-
 🌞 **Mettez en place un petit serveur NFS sur l'une des deux VMs**
 
-- j'vais pas ré-écrire la roue, google it, ou [go ici](https://www.server-world.info/en/note?os=Rocky_Linux_8&p=nfs&f=1)
-- partagez un dossier que vous avez créé au préalable dans `/srv`
-- vérifiez que vous accédez à ce dossier avec l'autre machine : [le client NFS](https://www.server-world.info/en/note?os=Rocky_Linux_8&p=nfs&f=2)
+```
+[gene@localhost ~]$ sudo dnf -y install nfs-utils
+[...]
+Complete!
+[gene@localhost ~]$ sudo nano /etc/idmapd.conf
+[gene@localhost ~]$ sudo nano /etc/exports
+[gene@localhost ~]$ cat /etc/exports
+/srv/nfsshare 10.3.1.0/24(rw,no_root_squash)
+[gene@localhost ~]$ sudo systemctl enable --now rpcbind nfs-server
+Created symlink /etc/systemd/system/multi-user.target.wants/nfs-server.service → /usr/lib/systemd/system/nfs-server.service.
+[gene@localhost ~]$ sudo firewall-cmd --add-service=nfs
+success
+[gene@localhost ~]$ sudo firewall-cmd --runtime-to-permanent
+success
+[gene@localhost ~]$ sudo mkdir /srv/nfsshare
+[gene@localhost ~]$ sudo nano /srv/nfsshare/helloworld.txt
+[gene@localhost ~]$ cat /srv/nfsshare/helloworld.txt
+helloworld!
+```
 
-> Si besoin, comme d'hab, je peux aider à la compréhension, n'hésitez pas à m'appeler.
+```
+[gene@localhost ~]$ sudo mount -t nfs 10.3.1.11:/srv/shared /mnt
+[gene@client ~]$ df -hT /mnt
+Filesystem            Type  Size  Used Avail Use% Mounted on
+10.3.1.11:/srv/shared nfs4  6.2G  1.1G  5.2G  17% /mnt
+[gene@client ~]$ cat /mnt/hi.txt
+Salut à tous les amis c'est David Lafarge Pokemon j'espère que vous allez bien.
+```
 
 🌞 **Wireshark it !**
 
-- une fois que c'est en place, utilisez `tcpdump` pour capturer du trafic NFS
-- déterminez le port utilisé par le serveur
+[gene@localhost srv]$ sudo tcpdump -i enp0s8 -c 10 -w nfs.pcapng not port 22
+dropped privs to tcpdump
+tcpdump: listening on enp0s8, link-type EN10MB (Ethernet), snapshot length 262144 bytes
+10 packets captured
+20 packets received by filter
+0 packets dropped by kernel
 
 🌞 **Demandez aux OS**
 
 - repérez, avec un commande adaptée, la connexion NFS sur le client et sur le serveur
 
 ```
-# GNU/Linux
-$ ss
+[gene@localhost srv]$ sudo ss -ltpn | grep 2049
+LISTEN 0      64           0.0.0.0:2049       0.0.0.0:*
+LISTEN 0      64              [::]:2049          [::]:*
+[gene@client ~]$ sudo ss -tp
+State         Recv-Q         Send-Q                 Local Address:Port                    Peer Address:Port          Process
+ESTAB         0              0                          10.3.1.12:pop3s                      10.3.1.11:nfs
 ```
 
-🦈 **Et vous me remettez une capture de trafic NFS** la plus complète possible. J'ai pas dit que je voulais le plus de trames possible, mais juste, ce qu'il faut pour avoir un max d'infos sur le trafic
+> 🦈 [capture NFS](./pcap/TCP_nfs.pcapng)
 
 ## 3. DNS
 
@@ -121,3 +132,17 @@ $ ss
 
 - capturez le trafic avec un `tcpdump`
 - déterminez le port et l'IP du serveur DNS auquel vous vous connectez
+  - port : 53
+  - IP : 192.168.112.25
+
+```
+[gene@localhost shared]$ sudo tcpdump -i enp0s3 -c 10 -w dns.pcapng not port 22 &
+[3] 2479
+[gene@localhost shared]$ dropped privs to tcpdump
+tcpdump: listening on enp0s3, link-type EN10MB (Ethernet), snapshot length 262144 bytes
+dig millesima.fr | grep SERVER
+;; SERVER: 192.168.112.251#53(192.168.112.251)
+[gene@localhost shared]$ 10 packets captured
+10 packets received by filter
+0 packets dropped by kernel
+```
