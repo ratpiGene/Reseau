@@ -2,40 +2,6 @@
 
 On va utiliser GNS3 dans ce TP pour se rapprocher d'un cas réel. On va focus sur l'aspect routing/switching, avec du matériel Cisco. On va aussi mettre en place des VLANs.
 
-# 0. Prérequis
-
-➜ GNS3 installé et prêt à l'emploi
-
-- GNS3VM fonctionnelle
-- de quoi faire tourner un switch Cisco
-  - [IOU2 L2 dispo ici](http://dl.nextadmin.net/dl/EVE-NG-image/iol/bin/i86bi_linux_l2-adventerprisek9-ms.SSA.high_iron_20180510.bin)
-- de quoi faire tourner un routeur Cisco
-
-➜ Les clients seront soit :
-
-- VMs Rocky Linux
-- VPCS
-  - c'est un truc de GNS pour simuler un client du réseau
-  - quand on veut juste un truc capable de faire des pings et rien de plus, c'est parfait
-  - ça consomme R en ressources
-
-> Faites bien attention aux logos des machines sur les schémas, et vous verrez clairement quand il faut un VPCS ou une VM.
-
-➜ **Vous ne créerez aucune machine virtuelle au début. Vous les créerez au fur et à mesure que le TP vous le demande.** A chaque fois qu'une nouvelle machine devra être créée, vous trouverez l'emoji 🖥️ avec son nom.
-
-## Checklist VM Linux
-
-A chaque machine déployée, vous **DEVREZ** vérifier la 📝**checklist**📝 :
-
-- [x] IP locale, statique ou dynamique
-- [x] hostname défini
-- [x] firewall actif, qui ne laisse passer que le strict nécessaire
-- [x] SSH fonctionnel
-- [x] résolution de nom
-  - vers internet, quand vous aurez le routeur en place
-
-**Les éléments de la 📝checklist📝 sont STRICTEMENT OBLIGATOIRES à réaliser mais ne doivent PAS figurer dans le rendu.**
-
 # I. Dumb switch
 
 ## 1. Topologie 1
@@ -51,10 +17,21 @@ A chaque machine déployée, vous **DEVREZ** vérifier la 📝**checklist**📝 
 
 🌞 **Commençons simple**
 
-- définissez les IPs statiques sur les deux VPCS
-- `ping` un VPCS depuis l'autre
+```
+PC2> show ip all
+NAME   IP/MASK              GATEWAY           MAC                DNS
+PC2    10.1.1.2/24          255.255.255.0     00:50:79:66:68:01
+PC2> ping  10.1.1.1
+84 bytes from 10.1.1.1 icmp_seq=1 ttl=64 time=0.131 ms
+```
 
-> Jusque là, ça devrait aller. Noter qu'on a fait aucune conf sur le switch. Tant qu'on ne fait rien, c'est une bête multiprise.
+```
+PC1> show ip all
+NAME   IP/MASK              GATEWAY           MAC                DNS
+PC1    10.1.1.1/24          255.255.255.0     00:50:79:66:68:00
+PC1> ping  10.1.1.2
+84 bytes from 10.1.1.2 icmp_seq=1 ttl=64 time=0.131 ms
+```
 
 # II. VLAN
 
@@ -86,15 +63,20 @@ Le principe est simple :
 
 🌞 **Adressage**
 
-- définissez les IPs statiques sur tous les VPCS
-- vérifiez avec des `ping` que tout le monde se ping
+```
+ PC3> ping 10.1.1.1 -c 1
+ 84 bytes from 10.1.1.1 icmp_seq=1 ttl=64 time=0.311 ms
+ PC3> ping 10.1.1.2 -c 1
+ 84 bytes from 10.1.1.2 icmp_seq=1 ttl=64 time=0.640 ms
+```
 
 🌞 **Configuration des VLANs**
 
-- référez-vous [à la section VLAN du mémo Cisco](../../cours/memo/memo_cisco.md#8-vlan)
-- déclaration des VLANs sur le switch `sw1`
-- ajout des ports du switches dans le bon VLAN (voir [le tableau d'adressage de la topo 2 juste au dessus](#2-adressage-topologie-2))
-  - ici, tous les ports sont en mode _access_ : ils pointent vers des clients du réseau
+```
+  sw1#show vlan br
+  40   clients                           active    Et0/0, Et0/1
+  50   admins                          active    Et0/2
+```
 
 🌞 **Vérif**
 
