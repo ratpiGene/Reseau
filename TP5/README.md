@@ -73,15 +73,24 @@ Le principe est simple :
 🌞 **Configuration des VLANs**
 
 ```
-  sw1#show vlan br
-  40   clients                           active    Et0/0, Et0/1
-  50   admins                          active    Et0/2
+  sw1#show vlan
+  10   clients                           active    Et0/0, Et0/1
+  29   admins                          active    Et0/2
 ```
 
 🌞 **Vérif**
 
-- `pc1` et `pc2` doivent toujours pouvoir se ping
-- `pc3` ne ping plus personne
+```
+PC1> ping 10.5.10.2
+
+84 bytes from 10.5.10.2 icmp_seq=1 ttl=64 time=0.221 ms
+```
+
+```
+PC3> ping 10.5.10.1
+
+host (10.5.10.1) not reachable
+```
 
 # III. Routing
 
@@ -126,53 +135,115 @@ L'adresse des machines au sein de ces réseaux :
 
 🌞 **Adressage**
 
-- définissez les IPs statiques sur toutes les machines **sauf le _routeur_**
+```
+  PC1> show ip all
+  NAME   IP/MASK              GATEWAY           MAC                DNS
+  PC1    10.5.40.1/24         255.255.255.0     00:50:79:66:68:00
+```
+
+```
+PC2> show ip all
+NAME   IP/MASK              GATEWAY           MAC                DNS
+PC2    10.5.40.2/24         255.255.255.0     00:50:79:66:68:01
+```
+
+```
+adm1> show ip all
+NAME   IP/MASK              GATEWAY           MAC                DNS
+adm1   10.5.50.1/24         255.255.255.0     00:50:79:66:68:02
+```
+
+```
+[gene@web1 ~]$ ip a
+2: enp0s3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
+    link/ether 08:00:27:a6:b1:98 brd ff:ff:ff:ff:ff:ff
+    inet 10.5.30.1/24 brd 10.5.30.255 scope global noprefixroute enp0s3
+      valid_lft forever preferred_lft forever
+    inet6 fe80::a00:27ff:fea6:b198/64 scope link
+      valid_lft forever preferred_lft forever
+```
 
 🌞 **Configuration des VLANs**
 
-- référez-vous au [mémo Cisco](../../cours/memo/memo_cisco.md#8-vlan)
-- déclaration des VLANs sur le switch `sw1`
-- ajout des ports du switches dans le bon VLAN (voir [le tableau d'adressage de la topo 2 juste au dessus](#2-adressage-topologie-2))
-- il faudra ajouter le port qui pointe vers le _routeur_ comme un _trunk_ : c'est un port entre deux équipements réseau (un _switch_ et un _routeur_)
+```
+sw1#show vlan
+  VLAN Name                             Status    Ports
+  ---- -------------------------------- --------- -------------------------------
+  1    default                          active    Et1/0, Et1/1, Et1/2, Et1/3
+                                                  Et2/0, Et2/1, Et2/2, Et2/3
+                                                  Et3/0, Et3/1, Et3/2
 
----
-
-➜ **Pour le _routeur_**
-
-- référez-vous au [mémo Cisco](../../cours/memo/memo_cisco.md)
-- ici, on va avoir besoin d'un truc très courant pour un _routeur_ : qu'il porte plusieurs IP sur une unique interface
-  - avec Cisco, on crée des "sous-interfaces" sur une interface
-  - et on attribue une IP à chacune de ces sous-interfaces
-- en plus de ça, il faudra l'informer que, pour chaque interface, elle doit être dans un VLAN spécifique
-
-Pour ce faire, un exemple. On attribue deux IPs `192.168.1.254/24` VLAN 10 et `192.168.2.254` VLAN 20 à un _routeur_. L'interface concernée sur le _routeur_ est `fastEthernet 0/0` :
-
-```cisco
-# conf t
-
-(config)# interface fastEthernet 0/0.10
-R1(config-subif)# encapsulation dot1Q 10
-R1(config-subif)# ip addr 192.168.1.254 255.255.255.0
-R1(config-subif)# exit
-
-(config)# interface fastEthernet 0/0.20
-R1(config-subif)# encapsulation dot1Q 20
-R1(config-subif)# ip addr 192.168.2.254 255.255.255.0
-R1(config-subif)# exit
+  10   clients                          active    Et0/3
+  20   admins                           active    Et0/0, Et0/1
+  30   servers                          active    Et0/2
+  sw1#show interface trunk
+  Port        Mode             Encapsulation  Status        Native vlan
+  Et3/3       on               802.1q         trunking      1
+  Port        Vlans allowed on trunk
+  Et3/3       1-4094
+  Port        Vlans allowed and active in management domain
+  Et3/3       1,30,40,50
+  Port        Vlans in spanning tree forwarding state and not pruned
+  Et3/3       1,30,40,50
 ```
 
 🌞 **Config du _routeur_**
 
-- attribuez ses IPs au _routeur_
-  - 3 sous-interfaces, chacune avec son IP et un VLAN associé
+```
+   R1#show ip int br
+   Interface                  IP-Address      OK? Method Status                Protocol
+   FastEthernet0/0            unassigned      YES unset  administratively down down
+   FastEthernet0/0.30         10.5.10.254     YES manual administratively down down
+   FastEthernet0/0.40         10.5.20.254     YES manual administratively down down
+   FastEthernet0/0.50         10.5.30.254     YES manual administratively down down
+```
 
 🌞 **Vérif**
 
 - tout le monde doit pouvoir ping le routeur sur l'IP qui est dans son réseau
+  ```
+  PC1> ping 10.5.10.254
+  84 bytes from 10.5.10.254 icmp_seq=1 ttl=255 time=4.473 ms
+  PC2> ping 10.5.10.254
+  84 bytes from 10.5.10.254 icmp_seq=2 ttl=255 time=4.510 ms
+  ```
+  ```
+  adm1> ping 10.5.20.254
+  84 bytes from 10.5.20.254 icmp_seq=2 ttl=255 time=10.536 ms
+  ```
+  ```
+  [gene@web1 ~]$ ping 10.5.30.254
+  PING 10.5.30.254 (10.5.30.254) 56(84) bytes of data.
+  64 bytes from 10.5.30.254: icmp_seq=1 ttl=255 time=9.02 ms
+  ```
 - en ajoutant une route vers les réseaux, ils peuvent se ping entre eux
+
   - ajoutez une route par défaut sur les VPCS
+    ```
+    PC1> ip 10.5.40.1 255.255.255.0 10.5.40.254
+    PC2> ip 10.5.40.2 255.255.255.0 10.5.40.254
+    adm1> 10.5.50.1 255.255.255.0 gateway 10.5.50.254
+    ```
   - ajoutez une route par défaut sur la machine virtuelle
+    ```
+    [gene@web1 ~]$ ip route | grep default
+    default via 10.5.30.254 dev enp0s3 proto static metric 102
+    ```
   - testez des `ping` entre les réseaux
+
+    ```
+    PC1> ping 10.5.20.1
+    84 bytes from 10.5.20.1 icmp_seq=1 ttl=63 time=23.065 ms
+    PC1> ping 10.5.30.1
+    84 bytes from 10.5.30.1 icmp_seq=1 ttl=63 time=19.975 ms
+    ```
+
+    ```
+    adm1> ping 10.5.30.1
+    84 bytes from 10.5.30.1 icmp_seq=1 ttl=63 time=20.062 ms
+    adm1> ping 10.5.10.1
+    84 bytes from 10.5.10.1 icmp_seq=1 ttl=63 time=14.471 ms
+    ```
 
 # IV. NAT
 
@@ -207,22 +278,87 @@ L'adresse des machines au sein de ces réseaux :
 🌞 **Ajoutez le noeud Cloud à la topo**
 
 - branchez à `eth1` côté Cloud
-- côté routeur, il faudra récupérer un IP en DHCP (voir [le mémo Cisco](../../cours/memo/memo_cisco.md))
-- vous devriez pouvoir `ping 1.1.1.1`
+- côté routeur, il faudra récupérer un IP en DHCP :
+
+```
+R1(config)#interface FastEthernet0/1
+R1(config-if)#ip address dhcp
+R1(config-if)#no shut
+R1(config-if)#exit
+R1(config)#exit
+
+R1#show ip int br
+Interface                  IP-Address      OK? Method Status                Protocol
+[...]
+FastEthernet0/1            10.0.3.16       YES DHCP   up                    up
+[...]
+```
+
+- vous devriez pouvoir ping 1.1.1.1
+
+```
+R1#ping 1.1.1.1
+
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 1.1.1.1, timeout is 2 seconds:
+.!!!!
+Success rate is 80 percent (4/5), round-trip min/avg/max = 20/62/160 ms
+```
 
 🌞 **Configurez le NAT**
 
-- référez-vous [à la section NAT du mémo Cisco](../../cours/memo/memo_cisco.md#7-configuration-dun-nat-simple)
+```
+R1#conf t
+R1(config)#interface fastEthernet0/1
+R1(config-if)#ip address dhcp
+R1(config-if)#no shut
+R1(config-if)#ip nat outside
+R1(config-if)#exit
+R1(config)#interface fastEthernet0/0
+R1(config-if)#ip nat inside
+R1(config-if)#no shut
+R1(config-if)#exit
+R1(config)#access-list 1 permit any
+R1(config)#ip nat inside source list 1 interface fastEthernet0/1 overload
+R1(config)#exit
+```
 
 🌞 **Test**
 
-- ajoutez une route par défaut (si c'est pas déjà fait)
-  - sur les VPCS
-  - sur la machine Linux
 - configurez l'utilisation d'un DNS
-  - sur les VPCS
-  - sur la machine Linux
-- vérifiez un `ping` vers un nom de domaine
+
+  - sur les VPCS :
+
+  ```
+  PC1> ip dns 1.1.1.1
+  PC2> ip dns 1.1.1.1
+  adm1> ip dns 1.1.1.1
+  ```
+
+  - sur la machine Linux :
+
+  ```
+  [gene@web1 ~]$ cat /etc/sysconfig/network-scripts/ifcfg-enp0s3 | grep DNS
+  DNS1=1.1.1.1
+  ```
+
+- vérifiez un `ping` vers un nom de domaine :
+
+```
+PC1> ping gitlab.com
+84 bytes from 172.65.251.78 icmp_seq=1 ttl=61 time=39.645 ms
+
+PC2> ping google.com
+google.com resolved to 142.250.179.110
+84 bytes from 142.250.179.110 icmp_seq=1 ttl=112 time=29.360 ms
+
+adm1> ping github.com
+github.com resolved to 140.82.121.3
+84 bytes from 140.82.121.3 icmp_seq=1 ttl=52 time=40.301 ms
+
+[gene@web ~]$ ping gitlab.com
+64 bytes from 172.65.251.78 (172.65.251.78): icmp_seq=1 ttl=61 time=49.5 ms
+```
 
 # V. Add a building
 
@@ -263,8 +399,8 @@ Vous pouvez partir de la topologie 4.
 🌞 **Vous devez me rendre le `show running-config` de tous les équipements**
 
 - de tous les équipements réseau
-  - le routeur
-  - les 3 switches
+- le routeur
+- les 3 switches
 
 > N'oubliez pas les VLANs sur tous les switches.
 
@@ -274,10 +410,10 @@ Vous pouvez partir de la topologie 4.
 
 - il doit distribuer des IPs aux clients dans le réseau `clients` qui sont branchés au même switch que lui
 - sans aucune action manuelle, les clients doivent...
-  - avoir une IP dans le réseau `clients`
-  - avoir un accès au réseau `servers`
-  - avoir un accès WAN
-  - avoir de la résolution DNS
+- avoir une IP dans le réseau `clients`
+- avoir un accès au réseau `servers`
+- avoir un accès WAN
+- avoir de la résolution DNS
 
 > Réutiliser les serveurs DHCP qu'on a monté dans les autres TPs.
 
@@ -289,3 +425,7 @@ Vous pouvez partir de la topologie 4.
 - il peut ping `google.com`
 
 > Faites ça sur n'importe quel VPCS que vous venez d'ajouter : `pc3` ou `pc4` ou `pc5`.
+
+```
+
+```
