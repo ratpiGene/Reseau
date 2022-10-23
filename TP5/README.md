@@ -400,11 +400,113 @@ Vous pouvez partir de la topologie 4.
 
 - de tous les équipements réseau
 - le routeur
+
+```
+R1#show running-config
+hostname R1
+interface FastEthernet0/0
+no ip address
+ip nat inside
+interface FastEthernet0/0.10
+encapsulation dot1Q 10
+ip address 10.5.10.254 255.255.255.0
+!
+interface FastEthernet0/0.20
+encapsulation dot1Q 20
+ip address 10.5.20.254 255.255.255.0
+!
+interface FastEthernet0/0.30
+encapsulation dot1Q 30
+ip address 10.5.30.254 255.255.255.0
+!
+interface FastEthernet0/1
+ip address dhcp
+ip nat outside
+!
+ip nat inside source list 1 interface FastEthernet0/1 overload
+!
+access-list 1 permit any
+```
+
 - les 3 switches
+- sw1:
+
+```
+sw1#show running-config
+hostname sw1
+!
+interface Ethernet0/0
+switchport trunk allowed vlan 10,20,30
+switchport trunk encapsulation dot1q
+switchport mode trunk
+!
+interface Ethernet0/1
+switchport trunk allowed vlan 10,20,30
+switchport trunk encapsulation dot1q
+switchport mode trunk
+!
+interface Ethernet3/3
+switchport trunk allowed vlan 10,20,30
+switchport trunk encapsulation dot1q
+switchport mode trunk
+```
+
+- sw2:
+
+```
+sw2#show running-config
+hostname sw2
+!
+interface Ethernet0/0
+switchport access vlan 10
+switchport mode access
+!
+interface Ethernet0/1
+switchport access vlan 10
+switchport mode access
+!
+interface Ethernet0/2
+switchport access vlan 20
+switchport mode access
+!
+interface Ethernet0/3
+switchport access vlan 30
+switchport mode access
+!
+interface Ethernet3/3
+switchport trunk encapsulation dot1q
+switchport mode trunk
+
+```
+
+- sw3:
+
+```
+sw3#show running-config
+hostname sw3
+!
+interface Ethernet0/0
+switchport access vlan 10
+switchport mode access
+!
+interface Ethernet0/1
+switchport access vlan 10
+switchport mode access
+!
+interface Ethernet0/2
+switchport access vlan 10
+switchport mode access
+!
+interface Ethernet0/3
+switchport access vlan 10
+switchport mode access
+!
+interface Ethernet3/3
+switchport trunk encapsulation dot1q
+switchport mode trunk
+```
 
 > N'oubliez pas les VLANs sur tous les switches.
-
-🖥️ **VM `dhcp1.client1.tp4`**, déroulez la [Checklist VM Linux](#checklist-vm-linux) dessus
 
 🌞 **Mettre en place un serveur DHCP dans le nouveau bâtiment**
 
@@ -415,17 +517,51 @@ Vous pouvez partir de la topologie 4.
 - avoir un accès WAN
 - avoir de la résolution DNS
 
+```
+[gene@dhcp1 ~]$ sudo cat /etc/dhcp/dhcpd.conf
+default-lease-time 900;
+max-lease-time 10000;
+ddns-update-style none;
+authoritative;
+subnet 10.5.10.0 netmask 255.255.255.0 {
+  range 10.5.10.3 10.5.10.252;
+  option routers 10.5.10.254;
+  option subnet-mask 255.255.255.0;
+  option domain-name-servers 8.8.8.8;
+}
+```
+
 > Réutiliser les serveurs DHCP qu'on a monté dans les autres TPs.
 
 🌞 **Vérification**
 
-- un client récupère une IP en DHCP
-- il peut ping le serveur Web
-- il peut ping `8.8.8.8`
-- il peut ping `google.com`
+**Sur PC3 :**
 
-> Faites ça sur n'importe quel VPCS que vous venez d'ajouter : `pc3` ou `pc4` ou `pc5`.
+- un client récupère une IP en DHCP
 
 ```
+PC3> ip dhcp -r
+DORA IP 10.5.10.5/24 GW 10.5.10.254
+```
 
+- il peut ping le serveur Web
+
+```
+PC3> ping 10.5.30.1
+84 bytes from 10.5.30.1 icmp_seq=1 ttl=63 time=30.276 ms
+```
+
+- il peut ping `8.8.8.8`
+
+```
+PC3> ping 8.8.8.8
+84 bytes from 8.8.8.8 icmp_seq=1 ttl=113 time=32.500 ms
+```
+
+- il peut ping `google.com`
+
+```
+PC3> ping google.com -c 3
+google.com resolved to 216.58.198.206
+84 bytes from 216.58.198.206 icmp_seq=1 ttl=114 time=28.290 ms
 ```
