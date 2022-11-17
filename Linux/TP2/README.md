@@ -382,46 +382,74 @@ MariaDB [(none)]> SELECT user FROM mysql.user;
 🌞 **Install de PHP**
 
 ```bash
-# On ajoute le dépôt CRB
-$ sudo dnf config-manager --set-enabled crb
-# On ajoute le dépôt REMI
-$ sudo dnf install dnf-utils http://rpms.remirepo.net/enterprise/remi-release-9.rpm -y
-
-# On liste les versions de PHP dispos, au passage on va pouvoir accepter les clés du dépôt REMI
-$ dnf module list php
-
-# On active le dépôt REMI pour récupérer une version spécifique de PHP, celle recommandée par la doc de NextCloud
-$ sudo dnf module enable php:remi-8.1 -y
-
-# Eeeet enfin, on installe la bonne version de PHP : 8.1
-$ sudo dnf install -y php81-php
+[gene@web ~]$ sudo dnf config-manager --set-enabled crb
+[gene@web ~]$ sudo dnf install dnf-utils http://rpms.remirepo.net/enterprise/remi-release-9.rpm -y
+[...]
+Complete!
+[gene@web ~]$ dnf module list php
+[...]
+[gene@web ~]$ sudo dnf module enable php:remi-8.1 -y
+[...]
+[gene@web ~]$ sudo dnf install -y php81-php
+[...]
+Complete!
 ```
 
 🌞 **Install de tous les modules PHP nécessaires pour NextCloud**
 
 ```bash
-# eeeeet euuuh boom. Là non plus j'ai pas pondu ça, c'est la doc :
-$ sudo dnf install -y libxml2 openssl php81-php php81-php-ctype php81-php-curl php81-php-gd php81-php-iconv php81-php-json php81-php-libxml php81-php-mbstring php81-php-openssl php81-php-posix php81-php-session php81-php-xml php81-php-zip php81-php-zlib php81-php-pdo php81-php-mysqlnd php81-php-intl php81-php-bcmath php81-php-gmp
+[gene@web ~]$ sudo dnf install -y libxml2 openssl php81-php php81-php-ctype php81-php-curl php81-php-gd php81-php-iconv php81-php-json php81-php-libxml php81-php-mbstring php81-php-openssl php81-php-posix php81-php-session php81-php-xml php81-php-zip php81-php-zlib php81-php-pdo php81-php-mysqlnd php81-php-intl php81-php-bcmath php81-php-gmp
+[...]
+Complete!
 ```
 
 🌞 **Récupérer NextCloud**
 
 - créez le dossier `/var/www/tp2_nextcloud/`
-  - ce sera notre _racine web_ (ou _webroot_)
-  - l'endroit où le site est stocké quoi, on y trouvera un `index.html` et un tas d'autres marde, tout ce qui constitue NextClo :D
-- récupérer le fichier suivant avec une commande `curl` ou `wget` : https://download.nextcloud.com/server/prereleases/nextcloud-25.0.0rc3.zip
-- extrayez tout son contenu dans le dossier `/var/www/tp2_nextcloud/` en utilisant la commande `unzip`
-  - installez la commande `unzip` si nécessaire
-  - vous pouvez extraire puis déplacer ensuite, vous prenez pas la tête
-  - contrôlez que le fichier `/var/www/tp2_nextcloud/index.html` existe pour vérifier que tout est en place
-- assurez-vous que le dossier `/var/www/tp2_nextcloud/` et tout son contenu appartient à l'utilisateur qui exécute le service Apache
 
-> A chaque fois que vous faites ce genre de trucs, assurez-vous que c'est bien ok. Par exemple, vérifiez avec un `ls -al` que tout appartient bien à l'utilisateur qui exécute Apache.
+```
+[gene@web ~]$ sudo mkdir /var/www/tp2_nextcloud/
+```
+
+```
+[gene@web ~]$ wget https://download.nextcloud.com/server/prereleases/nextcloud-25.0.0rc3.zip
+[gene@web ~]$ unzip nextcloud-25.0.0rc3.zip
+[gene@web ~]$ sudo cp -r nextcloud/* /var/www/tp2_nextcloud/
+[gene@web ~]$ ls -al /var/www/tp2_nextcloud/
+total 132
+drwxr-xr-x. 14 apache apache  4096 Nov 16 21:05 .
+drwxr-xr-x.  5 root   root      54 Nov 16 21:54 ..
+drwxr-xr-x. 47 apache apache  4096 Nov 16 21:05 3rdparty
+drwxr-xr-x. 50 apache apache  4096 Nov 16 21:05 apps
+-rw-r--r--.  1 apache apache 19327 Nov 16 21:05 AUTHORS
+drwxr-xr-x.  2 apache apache    67 Nov 16 21:05 config
+-rw-r--r--.  1 apache apache  4095 Nov 16 21:05 console.php
+-rw-r--r--.  1 apache apache 34520 Nov 16 21:05 COPYING
+drwxr-xr-x. 23 apache apache  4096 Nov 16 21:05 core
+-rw-r--r--.  1 apache apache  6317 Nov 16 21:05 cron.php
+drwxr-xr-x.  2 apache apache  8192 Nov 16 21:05 dist
+-rw-r--r--.  1 apache apache   156 Nov 16 21:05 index.html
+-rw-r--r--.  1 apache apache  3456 Nov 16 21:05 index.php
+drwxr-xr-x.  6 apache apache   125 Nov 16 21:05 lib
+-rw-r--r--.  1 apache apache   283 Nov 16 21:05 occ
+drwxr-xr-x.  2 apache apache    23 Nov 16 21:05 ocm-provider
+drwxr-xr-x.  2 apache apache    55 Nov 16 21:05 ocs
+drwxr-xr-x.  2 apache apache    23 Nov 16 21:05 ocs-provider
+-rw-r--r--.  1 apache apache  3139 Nov 16 21:05 public.php
+-rw-r--r--.  1 apache apache  5426 Nov 16 21:05 remote.php
+drwxr-xr-x.  4 apache apache   133 Nov 16 21:05 resources
+-rw-r--r--.  1 apache apache    26 Nov 16 21:05 robots.txt
+-rw-r--r--.  1 apache apache  2452 Nov 16 21:05 status.php
+drwxr-xr-x.  3 apache apache    35 Nov 16 21:05 themes
+drwxr-xr-x.  2 apache apache    43 Nov 16 21:05 updater
+-rw-r--r--.  1 apache apache   387 Nov 16 21:05 version.php
+```
 
 🌞 **Adapter la configuration d'Apache**
 
-- regardez la dernière ligne du fichier de conf d'Apache pour constater qu'il existe une ligne qui inclut d'autres fichiers de conf
-- créez en conséquence un fichier de configuration qui porte un nom clair et qui contient la configuration suivante :
+```
+[gene@web ~]$ sudo nano /etc/httpd/conf.d/nextcloud.conf
+```
 
 ```apache
 <VirtualHost *:80>
@@ -429,7 +457,6 @@ $ sudo dnf install -y libxml2 openssl php81-php php81-php-ctype php81-php-curl p
   DocumentRoot /var/www/tp2_nextcloud/
   # on précise le nom que saisissent les clients pour accéder au service
   ServerName  web.tp2.linux
-
   # on définit des règles d'accès sur notre webroot
   <Directory /var/www/tp2_nextcloud/>
     Require all granted
@@ -443,6 +470,10 @@ $ sudo dnf install -y libxml2 openssl php81-php php81-php-ctype php81-php-curl p
 ```
 
 🌞 **Redémarrer le service Apache** pour qu'il prenne en compte le nouveau fichier de conf
+
+```
+[gene@web ~]$ sudo systemctl restart httpd
+```
 
 ### C. Finaliser l'installation de NextCloud
 
@@ -463,6 +494,47 @@ $ sudo dnf install -y libxml2 openssl php81-php php81-php-ctype php81-php-curl p
 
 🌞 **Exploration de la base de données**
 
-- connectez vous en ligne de commande à la base de données après l'installation terminée
-- déterminer combien de tables ont été crées par NextCloud lors de la finalisation de l'installation
-  - **_bonus points_** si la réponse à cette question est automatiquement donnée par une requête SQL
+```
+[gene@db ~]$ sudo mysql -u root
+[sudo] password for gene:
+Welcome to the MariaDB monitor.  Commands end with ; or \g.
+Your MariaDB connection id is 61
+Server version: 10.5.16-MariaDB MariaDB Server
+Copyright (c) 2000, 2018, Oracle, MariaDB Corporation Ab and others.
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+MariaDB [(none)]> SHOW DATABASES;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| mysql              |
+| nextcloud          |
+| performance_schema |
++--------------------+
+4 rows in set (0.000 sec)
+MariaDB [(none)]> USE nextcloud;
+Database changed
+MariaDB [nextcloud]> SELECT FOUND_ROWS();
++--------------+
+| FOUND_ROWS() |
++--------------+
+|           95 |
++--------------+
+1 row in set (0.000 sec)
+```
+
+Footer
+© 2022 GitHub, Inc.
+Footer navigation
+
+    Terms
+    Privacy
+    Security
+    Status
+    Docs
+    Contact GitHub
+    Pricing
+    API
+    Training
+    Blog
+    About
