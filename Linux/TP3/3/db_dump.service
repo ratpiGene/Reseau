@@ -1,0 +1,10 @@
+[Unit]
+Description=Backup service for nextcloud database
+
+[Service]
+User=db_dumps
+Type=oneshot
+WorkingDirectory=/srv/
+ExecStart=/usr/bin/bash tp3_db_dump.sh
+[Install]
+WantedBy=multi-user.target

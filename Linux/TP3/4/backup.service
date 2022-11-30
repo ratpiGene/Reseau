@@ -1,0 +1,11 @@
+[Unit]
+Description= Simple backup service for nextcloud config themes and data files.
+
+[Service]
+User=backup
+Type=oneshot
+WorkingDirectory=/srv/
+ExecStart=/usr/bin/bash tp3_backup.sh
+
+[Install]
+WantedBy=multi-user.target
