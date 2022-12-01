@@ -1,0 +1,8 @@
+version: "1.0"
+
+services:
+  forum:
+    image: goforum
+    restart: always
+    ports:
+      - "80:8080"
