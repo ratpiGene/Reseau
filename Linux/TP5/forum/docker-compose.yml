@@ -1,0 +1,11 @@
+version: "3.8"
+
+services:
+  forum:
+    image: forum
+    restart: always
+    ports:
+      - "8080-8082:8080"
+    volumes:
+      - "/srv/Avatar/:/app/Avatar/"
+    scale: 3

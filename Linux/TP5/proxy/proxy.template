@@ -1,0 +1,22 @@
+server {
+    listen 80 default_server;
+    server_name <SERVER_NAME>;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    ssl_certificate     "/etc/ssl/certs/<SERVER_NAME>.crt";
+    ssl_certificate_key "/etc/ssl/private/<SERVER_NAME>.key";
+
+    location / {
+        proxy_set_header  Host $host;
+        proxy_set_header  X-Real-IP $remote_addr;
+        proxy_set_header  X-Forwarded-Proto https;
+        proxy_set_header  X-Forwarded-Host $remote_addr;
+        proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
+
+        # On définit la cible du proxying
+        proxy_pass http://backend;
+    }
+}
